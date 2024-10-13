@@ -1,5 +1,3 @@
-import previous_assignment from './assignment-3';
-
 export type BookID = string;
 
 export interface Book {
@@ -40,7 +38,7 @@ export type OrderId = string;
 
 // A mock in-memory storage for books and orders
 const books: Book[] = [];
-const shelves: Record<ShelfId, Record<BookID, number>> = {}; // shelfId -> { bookId: count }
+const shelves: Record<ShelfId, Record<BookID, number>> = {};
 const orders: Array<{ orderId: OrderId; books: Record<BookID, number> }> = [];
 
 // List books with filters
@@ -66,11 +64,11 @@ async function listBooks(filters?: Filter[]): Promise<Book[]> {
 async function createOrUpdateBook(book: Book): Promise<BookID> {
   const existingBookIndex = books.findIndex(b => b.id === book.id);
   if (existingBookIndex > -1) {
-    books[existingBookIndex] = { ...books[existingBookIndex], ...book }; // Update the existing book
+    books[existingBookIndex] = { ...books[existingBookIndex], ...book };
     return books[existingBookIndex].id!;
   } else {
-    book.id = String(books.length + 1); // Simple ID assignment
-    books.push(book); // Create a new book
+    book.id = String(books.length + 1);
+    books.push(book);
     return book.id;
   }
 }
@@ -79,7 +77,7 @@ async function createOrUpdateBook(book: Book): Promise<BookID> {
 async function removeBook(bookId: BookID): Promise<void> {
   const index = books.findIndex(b => b.id === bookId);
   if (index > -1) {
-    books.splice(index, 1); // Remove the book
+    books.splice(index, 1);
   }
 }
 
@@ -93,10 +91,8 @@ async function placeBooksOnShelf(bookId: BookID, numberOfBooks: number, shelfId:
   const book = await lookupBookById(bookId);
   if (!book) throw new Error(`Book with ID ${bookId} not found`);
   
-  // Update stock in the in-memory book
   book.stock = (book.stock || 0) + numberOfBooks;
 
-  // Update shelves
   if (!shelves[shelfId]) {
     shelves[shelfId] = {};
   }
@@ -143,18 +139,17 @@ async function fulfilOrder(orderId: OrderId, booksFulfilled: Array<{ bookId: Boo
       throw new Error(`Not enough books on shelf ${shelfId} to fulfil the order for book ${bookId}`);
     }
     
-    shelves[shelfId][bookId] -= quantity; // Update shelf count
+    shelves[shelfId][bookId] -= quantity;
     if (shelves[shelfId][bookId] === 0) {
-      delete shelves[shelfId][bookId]; // Remove book if count reaches zero
+      delete shelves[shelfId][bookId];
     }
     
     const book = await lookupBookById(bookId);
     if (book) {
-      book.stock! -= quantity; // Update stock
+      book.stock! -= quantity;
     }
   }
 
-  // Optionally remove the order after fulfilment
   orders.splice(orderIndex, 1);
 }
 

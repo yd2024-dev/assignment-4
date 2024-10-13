@@ -1,55 +1,20 @@
-import { MongoClient, Db } from 'mongodb';
 import { Book, BookID } from '../adapter/assignment-4';
+import { getBookDatabase } from '../database_access';
 
 export class DatabaseBookService {
-  private db: Db;
-
-  constructor(client: MongoClient) {
-    this.db = client.db('your_database_name'); // Replace with your actual database name
+  async getBookById(bookId: BookID): Promise<Book | null> {
+    const db = getBookDatabase();
+    const book = await db.collection('books').findOne({ _id: bookId });
+    return book ? { ...book, id: book._id.toString() } : null;
   }
 
   async createOrUpdateBook(book: Book): Promise<BookID> {
-    const collection = this.db.collection('books');
-    const existingBook = await collection.findOne({ id: book.id });
-
-    if (existingBook) {
-      await collection.updateOne({ id: book.id }, { $set: book });
-      return book.id!;
-    } else {
-      const result = await collection.insertOne(book);
-      return result.insertedId.toString();
-    }
-  }
-
-  async removeBook(bookId: BookID): Promise<void> {
-    const collection = this.db.collection('books');
-    await collection.deleteOne({ id: bookId });
-  }
-
-  async lookupBookById(bookId: BookID): Promise<Book | undefined> {
-    const collection = this.db.collection('books');
-    return collection.findOne({ id: bookId }) as Promise<Book | undefined>;
-  }
-
-  async listBooks(filters?: any): Promise<Book[]> {
-    const collection = this.db.collection('books');
-    const query: any = {};
-
-    if (filters) {
-      if (filters.from) {
-        query.price = { ...query.price, $gte: filters.from };
-      }
-      if (filters.to) {
-        query.price = { ...query.price, $lte: filters.to };
-      }
-      if (filters.name) {
-        query.name = { $regex: filters.name, $options: 'i' };
-      }
-      if (filters.author) {
-        query.author = { $regex: filters.author, $options: 'i' };
-      }
-    }
-
-    return collection.find(query).toArray() as Promise<Book[]>;
+    const db = getBookDatabase();
+    await db.collection('books').updateOne(
+      { _id: book.id },
+      { $set: book },
+      { upsert: true }
+    );
+    return book.id!;
   }
 }

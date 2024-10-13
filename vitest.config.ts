@@ -1,17 +1,11 @@
 // vitest.config.ts
-const { defineConfig } = require('vitest/config');
+import { defineConfig } from 'vitest/config';
 
-async function createConfig() {
-  // Your asynchronous logic here (if needed)
-
-  return defineConfig({
-    test: {
-      globals: true, // Enable global test APIs
-      environment: 'node', // Use Node.js environment
-      // Add any other options you need
-    },
-  });
-}
-
-module.exports = createConfig();
-
+export default defineConfig({
+  test: {
+    globals: true, // Enable global test APIs
+    environment: 'node', // Use Node.js environment
+    setupFiles: './test/setup.ts', // Optional: specify setup files if needed
+    // Add any other options you need
+  },
+});

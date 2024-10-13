@@ -1,4 +1,4 @@
-import { MongoClient } from 'mongodb';
+import { MongoClient } from "mongodb";
 
 let client: MongoClient;
 
@@ -11,7 +11,7 @@ function getDatabaseName(uri: string): string | null {
 export async function setupDatabase(uri: string) {
   client = new MongoClient(uri);
   await client.connect();
-  
+
   const dbName = getDatabaseName(uri);
   console.log(`Connected to real database: ${dbName}`);
 }
@@ -24,6 +24,6 @@ export async function teardownDatabase() {
 
 export function getBookDatabase() {
   const uri = client.s.options.servers[0].host; // or adjust as necessary
-  const dbName = getDatabaseName(uri) || 'test'; // Fallback to 'test' if extraction fails
+  const dbName = getDatabaseName(uri) || "test"; // Fallback to 'test' if extraction fails
   return client.db(dbName);
 }

@@ -1,60 +1,24 @@
-import { z } from 'zod'
-import { type ZodRouter } from 'koa-zod-router'
-import { bookCollection } from '../database_access'
-import { ObjectId } from 'mongodb'
+import { z } from 'zod'; 
+import { Book, BookID } from '../adapter/assignment-4';
+import { bookCollection } from '../database_access';
 
-export default function createOrUpdateBook (router: ZodRouter): void {
-  router.register({
-    name: 'create or update a book',
-    method: 'post',
-    path: '/books',
-    validate: {
-      body: z.object({
-        id: z.string().optional(),
-        name: z.string(),
-        price: z.coerce.number(),
-        description: z.string(),
-        author: z.string(),
-        image: z.string()
-      })
-    },
-    handler: async (ctx, next) => {
-      const body = ctx.request.body
+const bookSchema = z.object({
+  name: z.string(),
+  author: z.string(),
+  description: z.string(),
+  price: z.number(),
+  image: z.string(),
+});
 
-      if (typeof body.id === 'string') {
-        const id = body.id
-        try {
-          const result = await bookCollection.replaceOne({ _id: { $eq: ObjectId.createFromHexString(id) } }, {
-            id,
-            name: body.name,
-            description: body.description,
-            price: body.price,
-            author: body.author,
-            image: body.image
-          })
-          if (result.modifiedCount === 1) {
-            ctx.body = { id }
-          } else {
-            ctx.statusCode = 404
-          }
-        } catch (e) {
-          ctx.statusCode = 500
-        }
-      } else {
-        try {
-          const result = await bookCollection.insertOne({
-            name: body.name,
-            description: body.description,
-            price: body.price,
-            author: body.author,
-            image: body.image
-          })
-          ctx.body = { id: result.insertedId }
-        } catch (e) {
-          ctx.statusCode = 500
-        }
-      }
-      await next()
-    }
-  })
+export async function createOrUpdateBook(book: Book): Promise<BookID> {
+  const parsedBook = bookSchema.parse(book);
+  const { id, ...bookData } = parsedBook;
+
+  await bookCollection.updateOne(
+    { _id: id },
+    { $set: bookData },
+    { upsert: true }
+  );
+
+  return id!;
 }
